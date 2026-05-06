@@ -33,7 +33,7 @@ class SbomValidationMessagesTest {
   @Test
   void summary_missingBoth() {
     assertEquals(
-        "SBOM is missing source code URL / commit ID labels.",
+        "SBOM is missing source code URL and commit ID labels.",
         SbomValidationMessages.summaryForStructuredImageMetadataIssues(
             List.of(
                 SbomValidationIssueCode.MISSING_SOURCE_CODE_URL,
