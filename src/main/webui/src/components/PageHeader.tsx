@@ -30,10 +30,17 @@ import {
   Flex,
   Stack,
   FlexItem,
+  Label,
+  Popover,
+  Content,
 } from '@patternfly/react-core';
 import { PageToggleButton } from '@patternfly/react-core';
 import BarsIcon from '@patternfly/react-icons/dist/esm/icons/bars-icon';
+import InfoCircleIcon from '@patternfly/react-icons/dist/esm/icons/info-circle-icon';
 import UserAvatarDropdown from './UserAvatarDropdown';
+
+const TECH_PREVIEW_DISCLAIMER =
+  'This feature is currently available as a Technology Preview feature. Technology Preview features are not supported with Red Hat production service level agreements (SLAs) and might not be functionally complete. Red Hat does not recommend using them in production. These features provide early access to upcoming product features, enabling customers to test functionality and provide feedback during the development process.';
 
 /**
  * Brand component - displays Red Hat logo and product name
@@ -110,6 +117,33 @@ const PageHeader: React.FC<PageHeaderProps> = ({ isSidebarOpen, onSidebarToggle 
     </Toolbar>
   );
 
+  const techPreviewTrigger = (
+    <Popover
+      triggerAction="click"
+      aria-label="Tech preview"
+      bodyContent={
+        <Content component="p" className="pf-v6-u-mb-0">
+          {TECH_PREVIEW_DISCLAIMER}
+        </Content>
+      }
+      maxWidth="32rem"
+    >
+      <Label
+        color="blue"
+        icon={<InfoCircleIcon />}
+        isClickable
+        textMaxWidth="16ch"
+        render={({ className, content, componentRef }) => (
+          <button type="button" className={className} ref={componentRef}>
+            {content}
+          </button>
+        )}
+      >
+        Tech preview
+      </Label>
+    </Popover>
+  );
+
   return (
     <Masthead>
       <MastheadMain>
@@ -127,10 +161,11 @@ const PageHeader: React.FC<PageHeaderProps> = ({ isSidebarOpen, onSidebarToggle 
         <MastheadBrand aria-label="Red Hat Trusted Profile Analyzer ExploitIQ">
           <Brand />
         </MastheadBrand>
+        <Flex alignItems={{ default: 'alignItemsCenter' }} className="pf-v6-u-ml-sm">
+          {techPreviewTrigger}
+        </Flex>
       </MastheadMain>
-      <MastheadContent aria-label="Page header content">
-        {headerToolbar}
-      </MastheadContent>
+      <MastheadContent aria-label="Page header content">{headerToolbar}</MastheadContent>
     </Masthead>
   );
 };
