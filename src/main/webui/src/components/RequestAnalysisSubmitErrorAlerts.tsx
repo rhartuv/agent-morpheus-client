@@ -36,6 +36,7 @@ const RequestAnalysisSubmitErrorAlerts: React.FC<RequestAnalysisSubmitErrorAlert
     <Stack hasGutter style={{ marginBottom: "var(--pf-t--global--spacer--md)" }}>
       {sbomValidationIssues?.map((issue, index) => {
         const copy = getSbomMetadataValidationIssueCopy(issue.code);
+        const expectedLabels = issue.expectedLabels ?? [];
         return (
           <Alert
             key={`${issue.code}-${index}`}
@@ -49,9 +50,9 @@ const RequestAnalysisSubmitErrorAlerts: React.FC<RequestAnalysisSubmitErrorAlert
                   <Content component={ContentVariants.p}>{copy.description}</Content>
                 </Content>
               ) : null}
-              {copy.labels.length > 0 ? (
+              {expectedLabels.length > 0 ? (
                 <List component="ul">
-                  {copy.labels.map((label) => (
+                  {expectedLabels.map((label) => (
                     <ListItem key={label}>{label}</ListItem>
                   ))}
                 </List>

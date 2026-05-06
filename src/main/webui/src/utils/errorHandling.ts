@@ -93,6 +93,8 @@ export function isValidationError(
  */
 export interface SbomValidationIssueEntry {
   code: string;
+  configuredProperty?: string;
+  expectedLabels?: string[];
 }
 
 export interface RequestAnalysisSubmissionError {
@@ -138,7 +140,20 @@ export function parseRequestAnalysisSubmissionError(
           "code" in item &&
           typeof (item as { code: unknown }).code === "string"
         ) {
-          sbomValidationIssues.push({ code: (item as { code: string }).code });
+          const issue = item as {
+            code: string;
+            configuredProperty?: unknown;
+            expectedLabels?: unknown;
+          };
+          const expectedLabels = Array.isArray(issue.expectedLabels)
+            ? issue.expectedLabels.filter((label): label is string => typeof label === "string")
+            : undefined;
+          sbomValidationIssues.push({
+            code: issue.code,
+            configuredProperty:
+              typeof issue.configuredProperty === "string" ? issue.configuredProperty : undefined,
+            expectedLabels,
+          });
         }
       }
       if (sbomValidationIssues.length > 0) {

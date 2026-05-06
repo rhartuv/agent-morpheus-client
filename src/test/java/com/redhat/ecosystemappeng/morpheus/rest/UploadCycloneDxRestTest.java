@@ -216,6 +216,10 @@ public class UploadCycloneDxRestTest {
             .body("sbomValidationIssues", hasSize(2))
             .body("sbomValidationIssues[0].code", equalTo("MISSING_SOURCE_CODE_URL"))
             .body("sbomValidationIssues[1].code", equalTo("MISSING_SOURCE_COMMIT_ID"))
+            .body("sbomValidationIssues[0].configuredProperty", equalTo("exploit-iq.image.source.location-keys"))
+            .body("sbomValidationIssues[0].expectedLabels", hasItems("image.source-location", "org.opencontainers.image.source"))
+            .body("sbomValidationIssues[1].configuredProperty", equalTo("exploit-iq.image.source.commit-id-keys"))
+            .body("sbomValidationIssues[1].expectedLabels", hasItems("image.source.commit-id", "org.opencontainers.image.revision"))
             .body("error", containsString("source code URL"))
             .body("error", containsString("commit ID"));
     }
@@ -235,6 +239,8 @@ public class UploadCycloneDxRestTest {
             .contentType(ContentType.JSON)
             .body("sbomValidationIssues", hasSize(1))
             .body("sbomValidationIssues[0].code", equalTo("MISSING_SOURCE_CODE_URL"))
+            .body("sbomValidationIssues[0].configuredProperty", equalTo("exploit-iq.image.source.location-keys"))
+            .body("sbomValidationIssues[0].expectedLabels", hasItems("image.source-location", "org.opencontainers.image.source"))
             .body("error", containsString("source code URL"));
     }
 
@@ -253,6 +259,8 @@ public class UploadCycloneDxRestTest {
             .contentType(ContentType.JSON)
             .body("sbomValidationIssues", hasSize(1))
             .body("sbomValidationIssues[0].code", equalTo("MISSING_SOURCE_COMMIT_ID"))
+            .body("sbomValidationIssues[0].configuredProperty", equalTo("exploit-iq.image.source.commit-id-keys"))
+            .body("sbomValidationIssues[0].expectedLabels", hasItems("image.source.commit-id", "org.opencontainers.image.revision"))
             .body("error", containsString("commit ID"));
     }
 

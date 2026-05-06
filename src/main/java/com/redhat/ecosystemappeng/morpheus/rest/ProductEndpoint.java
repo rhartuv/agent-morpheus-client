@@ -36,6 +36,8 @@ import org.jboss.resteasy.reactive.server.ServerExceptionMapper;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.redhat.ecosystemappeng.morpheus.config.AppConfig;
+import com.redhat.ecosystemappeng.morpheus.exception.SbomValidationIssueCode;
 import com.redhat.ecosystemappeng.morpheus.exception.SbomValidationException;
 import com.redhat.ecosystemappeng.morpheus.exception.ValidationException;
 import com.redhat.ecosystemappeng.morpheus.model.InlineCredential;
@@ -101,6 +103,9 @@ public class ProductEndpoint {
 
   @Inject
   CredentialProcessingService credentialProcessingService;
+
+  @Inject
+  AppConfig appConfig;
 
   @Context
   SecurityContext securityContext;
@@ -313,7 +318,17 @@ public class ProductEndpoint {
       LOGGER.errorf("SBOM metadata validation failed: %s — %s", e.getStructuredIssues(), e.getMessage());
       ArrayNode issuesNode = objectMapper.createArrayNode();
       for (var code : e.getStructuredIssues()) {
-        issuesNode.add(objectMapper.createObjectNode().put("code", code.name()));
+        var issueNode = objectMapper.createObjectNode().put("code", code.name());
+        if (code == SbomValidationIssueCode.MISSING_SOURCE_CODE_URL) {
+          issueNode.put("configuredProperty", "exploit-iq.image.source.location-keys");
+          var expectedLabels = issueNode.putArray("expectedLabels");
+          appConfig.image().source().locationKeys().forEach(expectedLabels::add);
+        } else if (code == SbomValidationIssueCode.MISSING_SOURCE_COMMIT_ID) {
+          issueNode.put("configuredProperty", "exploit-iq.image.source.commit-id-keys");
+          var expectedLabels = issueNode.putArray("expectedLabels");
+          appConfig.image().source().commitIdKeys().forEach(expectedLabels::add);
+        }
+        issuesNode.add(issueNode);
       }
       var entity = objectMapper.createObjectNode();
       entity.set("sbomValidationIssues", issuesNode);

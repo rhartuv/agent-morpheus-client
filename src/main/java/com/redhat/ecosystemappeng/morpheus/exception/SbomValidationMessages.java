@@ -31,7 +31,7 @@ public final class SbomValidationMessages {
     boolean missingUrl = issues.contains(SbomValidationIssueCode.MISSING_SOURCE_CODE_URL);
     boolean missingCommit = issues.contains(SbomValidationIssueCode.MISSING_SOURCE_COMMIT_ID);
     if (missingUrl && missingCommit) {
-      return "SBOM is missing source code URL / commit ID labels.";
+      return "SBOM is missing source code URL and commit ID labels.";
     }
     if (missingUrl) {
       return "SBOM is missing source code URL label.";

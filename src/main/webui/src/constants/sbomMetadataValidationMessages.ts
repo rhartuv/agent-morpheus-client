@@ -9,23 +9,11 @@ export const SBOM_METADATA_VALIDATION_ISSUES = {
     title: "Invalid SBOM: Missing source code URL",
     description:
       "Your SBOM must include a source code URL. Ensure one of the following labels is present in your metadata:",
-    labels: [
-      "image.source-location",
-      "io.openshift.build.source-location",
-      "upstream-source-url",
-      "org.opencontainers.image.source",
-    ],
   },
   MISSING_SOURCE_COMMIT_ID: {
     title: "Invalid SBOM: Missing source code commit ID",
     description:
       "Your SBOM must include a source code commit ID. Ensure one of the following labels is present in your metadata:",
-    labels: [
-      "image.source.commit-id",
-      "io.openshift.build.commit.id",
-      "upstream-source-ref",
-      "org.opencontainers.image.revision",
-    ],
   },
 } as const;
 
@@ -34,7 +22,6 @@ export type SbomMetadataValidationIssueCode = keyof typeof SBOM_METADATA_VALIDAT
 export function getSbomMetadataValidationIssueCopy(code: string): {
   title: string;
   description: string;
-  labels: readonly string[];
 } {
   if (code in SBOM_METADATA_VALIDATION_ISSUES) {
     return SBOM_METADATA_VALIDATION_ISSUES[code as SbomMetadataValidationIssueCode];
@@ -42,6 +29,5 @@ export function getSbomMetadataValidationIssueCopy(code: string): {
   return {
     title: "Invalid SBOM",
     description: "The SBOM could not be validated. Please review your file and try again.",
-    labels: [],
   };
 }
