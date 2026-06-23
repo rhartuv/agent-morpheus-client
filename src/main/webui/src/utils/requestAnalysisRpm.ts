@@ -17,10 +17,16 @@ export function isRpmArchChoice(value: string | undefined): value is RpmArchChoi
   return value !== undefined && RPM_ARCH_CHOICES.includes(value as RpmArchChoice);
 }
 
+/** Letters, digits, hyphens, dots, and underscores — rejects @, #, $, %, spaces, etc. */
+const RPM_PACKAGE_NVR_ALLOWED_CHARS = /^[a-zA-Z0-9._-]+$/;
+
 /** Parses a trimmed RPM N-V-R: release after last hyphen, version before that, name is the leading remainder (may contain hyphens). */
 export function parseTrimmedRpmNvr(
   trimmed: string
 ): { name: string; version: string; release: string } | null {
+  if (!RPM_PACKAGE_NVR_ALLOWED_CHARS.test(trimmed)) {
+    return null;
+  }
   const lastHyphen = trimmed.lastIndexOf("-");
   if (lastHyphen <= 0) {
     return null;
