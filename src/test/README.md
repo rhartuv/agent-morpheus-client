@@ -13,7 +13,7 @@ Then run `./mvnw test` (or your usual Maven test invocation). Without this, test
 
 ## REST API tests (`@QuarkusTest` + REST Assured)
 
-The package `com.redhat.ecosystemappeng.morpheus.rest` holds HTTP-level tests for the backend. They are **JUnit 5** classes annotated with **`@QuarkusTest`** and use **REST Assured** for requests and assertions.
+The package `com.redhat.ecosystemappeng.exploitiq.rest` holds HTTP-level tests for the backend. They are **JUnit 5** classes annotated with **`@QuarkusTest`** and use **REST Assured** for requests and assertions.
 
 ### Two ways to run the same tests
 
@@ -21,14 +21,14 @@ The package `com.redhat.ecosystemappeng.morpheus.rest` holds HTTP-level tests fo
 
 - Run: `./mvnw test` (or a narrower `-Dtest=…`).
 - **RestAssured** uses the URL Quarkus assigns to the **test application** started in the same JVM.
-- Typical stack: test `application.properties`, Mongo Dev Services, WireMock for outbound clients (e.g. Morpheus, GitHub), seeded data where enabled.
+- Typical stack: test `application.properties`, Mongo Dev Services, WireMock for outbound clients (e.g. ExploitIQ, GitHub), seeded data where enabled.
 - **Use when:** fast feedback, CI, no separate server needed.
 
 #### 2. Optional — RestAssured pointed at a **running** server
 
-- Set Quarkus config **`morpheus.rest-test.external-base-url`** to the base URL of an already-running app (no trailing slash required), for example:
-  - **Maven:** `./mvnw test -Dmorpheus.rest-test.external-base-url=http://localhost:8080`
-  - **`src/test/resources/application.properties`:** `%test.morpheus.rest-test.external-base-url=http://localhost:8080`
+- Set Quarkus config **`exploit-iq.rest-test.external-base-url`** to the base URL of an already-running app (no trailing slash required), for example:
+  - **Maven:** `./mvnw test -Dexploit-iq.rest-test.external-base-url=http://localhost:8080`
+  - **`src/test/resources/application.properties`:** `%test.exploit-iq.rest-test.external-base-url=http://localhost:8080`
 - **`@BeforeEach`**, tests call `RestApiTestFixture.configureRestAssuredIfExternal()`, which sets `RestAssured.baseURI` when that property is non-blank.
 - The **`@QuarkusTest` application still starts** in the test JVM; HTTP calls go to the **remote** base URL. That lets you reuse the **same** test code against e.g. `quarkus dev`, a container, or a shared environment.
 
@@ -36,7 +36,7 @@ The package `com.redhat.ecosystemappeng.morpheus.rest` holds HTTP-level tests fo
 
 - **One suite, two targets:** identical assertions exercise both the isolated test stack and a **real deployment** (local or staging), without maintaining a duplicate “integration only” test project.
 - **End-to-end confidence:** catch wiring, configuration, data, and infrastructure issues that only appear outside the trimmed test profile, while keeping a single source of truth for API behavior.
-- **Practical workflow:** run default tests in CI; occasionally run with `morpheus.rest-test.external-base-url` after a release candidate or config change to validate the running service matches expectations.
+- **Practical workflow:** run default tests in CI; occasionally run with `exploit-iq.rest-test.external-base-url` after a release candidate or config change to validate the running service matches expectations.
 
 ### Other helpers
 
@@ -48,7 +48,7 @@ For project-wide conventions (Surefire vs Failsafe, quality gates), see `openspe
 
 ## CI test pipeline image
 
-The Tekton task **`.tekton/tekton-tasks/maven-test-ci.yaml`** runs **`./mvnw test`** inside **`quay.io/exploit-iq/agent-morpheus-client-test-image:latest`**. That image bundles **JDK 21** (UBI OpenJDK) and **Syft** on `PATH`, using the same Syft install approach as **`src/main/docker/Dockerfile.multi-stage`** (install on Mandrel builder, copy `/tmp/syft` into the runtime layer) so `install.sh` has `gzip`/`tar` available.
+The Tekton task **`.tekton/tekton-tasks/maven-test-ci.yaml`** runs **`./mvnw test`** inside **`quay.io/ecosystem-appeng/exploit-iq-test-image:latest`**. That image bundles **JDK 21** (UBI OpenJDK) and **Syft** on `PATH`, using the same Syft install approach as **`src/main/docker/Dockerfile.multi-stage`** (install on Mandrel builder, copy `/tmp/syft` into the runtime layer) so `install.sh` has `gzip`/`tar` available.
 
 Pipelines expect that image tag to exist in Quay before `maven-test` can succeed.
 
@@ -58,10 +58,10 @@ From the **repository root** (requires access to `registry.redhat.io`; use `dock
 
 ```bash
 docker build -f src/test/docker/Dockerfile \
-  -t quay.io/exploit-iq/agent-morpheus-client-test-image:latest \
+  -t quay.io/ecosystem-appeng/exploit-iq-test-image:latest \
   src/test/docker
 
-docker push quay.io/exploit-iq/agent-morpheus-client-test-image:latest
+docker push quay.io/ecosystem-appeng/exploit-iq-test-image:latest
 ```
 
 For pushes to a **private** registry, point **`DOCKER_CONFIG`** at a directory that contains **`config.json`** (see Docker documentation); that directory must be the config **folder**, not the file path.

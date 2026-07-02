@@ -1,12 +1,13 @@
 # Project Context
 
 ## Purpose
-ExploitIQ Client is a Quarkus + React web application that interacts with the ExploitIQ (Agent Morpheus) service to evaluate vulnerabilities on Software Bill of Materials (SBOMs). The application allows users to:
+ExploitIQ Client is a Quarkus + React web application that interacts with the ExploitIQ
+service to evaluate vulnerabilities on Software Bill of Materials (SBOMs). The application allows users to:
 - Submit CycloneDX SBOMs and CVE for vulnerability analysis
 - Manage and view vulnerability analysis reports
 - Track products and components across multiple reports
 
-The application serves as a client interface for the Agent Morpheus vulnerability analysis service, providing request queuing, report management, and a web-based UI for interacting with analysis results.
+The application serves as a client interface for the ExploitIQ vulnerability analysis service, providing request queuing, report management, and a web-based UI for interacting with analysis results.
 
 ## Tech Stack
 
@@ -37,7 +38,7 @@ The application serves as a client interface for the Agent Morpheus vulnerabilit
 ### Code Style
 
 #### Java
-- Package structure: `com.redhat.ecosystemappeng.morpheus`
+- Package structure: `com.redhat.ecosystemappeng.exploitiq`
 - Standard Java naming conventions (PascalCase for classes, camelCase for methods/variables)
 - REST endpoints in `rest/` package
 - Service layer in `service/` package
@@ -67,7 +68,7 @@ The application serves as a client interface for the Agent Morpheus vulnerabilit
 - **API-First**: All communication via REST APIs documented with OpenAPI
 
 #### Code Organization
-- Backend: `src/main/java/com/redhat/ecosystemappeng/morpheus/`
+- Backend: `src/main/java/com/redhat/ecosystemappeng/exploitiq/`
   - `rest/` - REST endpoints
   - `service/` - Business logic services
   - `model/` - Data models
@@ -97,16 +98,16 @@ The application serves as a client interface for the Agent Morpheus vulnerabilit
 
 #### Backend Testing
 - **Unit Tests**: JUnit5 for isolated component testing
-  - Location: `src/test/java/com/redhat/ecosystemappeng/morpheus/service/`
+  - Location: `src/test/java/com/redhat/ecosystemappeng/exploitiq/service/`
   - Framework: JUnit5
   - Examples: `ReportServiceMetadataKeysTest` (tests utility methods without dependencies)
   - Execution: Maven Surefire plugin (`mvn test`)
 
 - **REST API tests** (HTTP / contract-style): JUnit5 + REST Assured + `@QuarkusTest`
-  - Location: `src/test/java/com/redhat/ecosystemappeng/morpheus/rest/`
+  - Location: `src/test/java/com/redhat/ecosystemappeng/exploitiq/rest/`
   - **Treated as unit tests today**: they run under **Surefire** with **`mvn test` only** (not a separate `mvn verify` / Failsafe integration phase).
   - Default mode: in-process Quarkus test application (Dev Services, test `application.properties`, WireMock where configured).
-  - Optional **remote RestAssured target**: set Quarkus property `morpheus.rest-test.external-base-url` (e.g. `-Dmorpheus.rest-test.external-base-url=http://localhost:8080`) so the same test methods assert against a **running** instance while the test JVM still starts `@QuarkusTest` (see `src/test/README.md`).
+  - Optional **remote RestAssured target**: set Quarkus property `exploit-iq.rest-test.external-base-url` (e.g. `-Dexploit-iq.rest-test.external-base-url=http://localhost:8080`) so the same test methods assert against a **running** instance while the test JVM still starts `@QuarkusTest` (see `src/test/README.md`).
   - Examples: `ProductEndpointRestTest`, `UploadSpdxRestTest`, `GetProductsRestTest`
 
 - **Test Resources**: 
@@ -132,7 +133,7 @@ The application serves as a client interface for the Agent Morpheus vulnerabilit
   - Java code MUST pass linting checks
 - **Test Execution**:
   - Backend and REST API tests run with **`mvn test`** (Surefire). There is no separate Failsafe phase for the REST suite today.
-  - Optional: pass `-Dmorpheus.rest-test.external-base-url=...` with `mvn test` to point REST Assured at a live server for the same tests (see `src/test/README.md`).
+  - Optional: pass `-Dexploit-iq.rest-test.external-base-url=...` with `mvn test` to point REST Assured at a live server for the same tests (see `src/test/README.md`).
 
 ### Git Workflow
 - Branching strategy: Not explicitly documented (currently on `homepage` branch)
@@ -179,11 +180,11 @@ Standard labels used to categorize vulnerability analysis results:
 
 #### Vulnerabilities
 - Additional vulnerability intelligence data
-- Can be used as an Intel Source for Morpheus
+- Can be used as an Intel Source for ExploitIQ
 - Include free-text descriptions and metadata
 
 ### Key Workflows
-1. **Request Submission**: User submits SBOM + CVEs → Request queued → Sent to Morpheus → Callback received → Report completed
+1. **Request Submission**: User submits SBOM + CVEs → Request queued → Sent to ExploitIQ → Callback received → Report completed
 2. **Report Management**: View, filter, sort, retry, delete reports
 3. **Product Tracking**: Reports grouped by product/image for analysis
 4. **Metadata Management**: Add custom metadata including git source location and commit ID
@@ -213,8 +214,8 @@ Standard labels used to categorize vulnerability analysis results:
 ## External Dependencies
 
 ### Services
-- **Agent Morpheus/ExploitIQ Service**: Primary vulnerability analysis service
-  - Endpoint: Configurable via `quarkus.rest-client.morpheus.url`
+- **ExploitIQ Service**: Primary vulnerability analysis service
+  - Endpoint: Configurable via `quarkus.rest-client.exploit-iq.url`
   - Handles SBOM analysis and CVE evaluation
   - Sends callback responses with analysis results
 
@@ -232,7 +233,7 @@ Standard labels used to categorize vulnerability analysis results:
 
 ### Infrastructure
 - **MongoDB**: Primary data store for reports, products, vulnerabilities
-  - Database: `agent-morpheus-client` (configurable)
+  - Database: `exploit-iq-client` (configurable)
   - Uses Quarkus Panache for data access
 
 - **OpenShift OAuth**: Authentication and authorization

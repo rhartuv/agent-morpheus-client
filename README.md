@@ -12,12 +12,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
-# Red Hat Exploit Intelligence- client
+# Red Hat ExploitIQ - client
 
 This project is a Quarkus + React web application implemented to interact with ExploitIQ service
 for sending requests to evaluate vulnerabilities on specific SBOMs.
 
-For product documentation and deeper context, see the [Exploit Intelligence documentation](https://github.com/RHEcosystemAppEng/exploitiq-docs).
+For product documentation and deeper context, see the [ExploitIQ documentation](https://github.com/RHEcosystemAppEng/exploitiq-docs).
 
 
 ## Development
@@ -158,7 +158,7 @@ flowchart TB
     classDef ok fill:#bbf7d0,stroke:#15803d,stroke-width:2px,color:#14532d
     classDef caption fill:#f8fafc,stroke:#94a3b8,stroke-width:1px,color:#334155
 
-    HEADER["<b>Exploit Intelligence -<br/>Analysis Pipeline</b>"]
+    HEADER["<b>ExploitIQ -<br/>Analysis Pipeline</b>"]
     class HEADER caption
 
     START([User request analysis])
@@ -178,7 +178,7 @@ flowchart TB
             SYFT_FAIL[[Syft failed<br/>submission failure / excluded]]
             CYCLONE_VAL["Parse &amp; validate CycloneDX<br/>from Syft output"]
             CYCLONE_FAIL[[CycloneDX parse / validation failed<br/>submission failure / excluded]]
-            TO_AGENT["Save report &amp; submit for analysis<br/>Morpheus queue"]
+            TO_AGENT["Save report &amp; submit for analysis<br/>ExploitIQ queue"]
 
             PER_CAPTION --> SYFT
         end
@@ -199,7 +199,7 @@ flowchart TB
         SC_CYCLONE_ERR[[CycloneDX parse failed<br/>immediate error to client]]
     end
 
-    subgraph AGENT["<b>Shared — Submit &amp; agent pipeline</b><br/>(RequestQueueService → Morpheus)"]
+    subgraph AGENT["<b>Shared — Submit &amp; agent pipeline</b><br/>(RequestQueueService → ExploitIQ)"]
         direction TB
         QUEUE_GATE["Is queue full?<br/>active reports &gt;= max active"]
         PEND_CAP[Pending queue<br/>below max size?]
