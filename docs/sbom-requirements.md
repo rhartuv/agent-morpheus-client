@@ -34,7 +34,7 @@ An SPDX product SBOM MUST:
 - Set `spdxVersion` to `SPDX-2.3`.
 - Include a `DESCRIBES` relationship from the document to a **product** package (the product name is taken from that package).
 - List **component** packages linked to the product with `PACKAGE_OF` relationships.
-- Give each component an OCI package URL (`purl`) in `externalRefs` with `referenceCategory` `PACKAGE_MANAGER` and `referenceType` `purl`. Supported components use the form:
+- Give each component an OCI package URL (`purl`) in `externalRefs` with `referenceCategory` `PACKAGE_MANAGER` or `PACKAGE-MANAGER` and `referenceType` `purl`. Supported components use the form:
 
   `pkg:oci/<name>@sha256:<digest>?repository_url=<registry>/<path>&tag=<tag>`
 
