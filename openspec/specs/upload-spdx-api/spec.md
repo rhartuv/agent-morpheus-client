@@ -113,3 +113,8 @@ When parsing an SPDX file, the system SHALL classify each component (package wit
 - **AND** the upload endpoint SHALL return HTTP 400 (Bad Request)
 - **AND** the response body SHALL include `"file": "At least one supported component is required. Supported components are packages with a PACKAGE_OF relationship to the product that have a purl (package URL) starting with pkg:oci. No such components were found."`
 
+#### Scenario: OCI purl with URL-encoded sha256 separator is supported
+- **WHEN** the SPDX parser processes a component whose OCI purl uses a URL-encoded colon in the version segment (for example `@sha256%3A<digest>` instead of `@sha256:<digest>`)
+- **THEN** the parser SHALL treat the component as supported
+- **AND** the parser SHALL normalize the image reference to use an unencoded `sha256:` digest separator for downstream container pull
+
