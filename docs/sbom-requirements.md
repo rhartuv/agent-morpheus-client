@@ -38,6 +38,8 @@ An SPDX product SBOM MUST:
 
   `pkg:oci/<name>@sha256:<digest>?repository_url=<registry>/<path>&tag=<tag>`
 
+  Per the [OCI purl specification](https://github.com/package-url/purl-spec/blob/main/docs/types/definitions/oci-definition.md), the colon in the digest may also be URL-encoded as `%3A` (for example `@sha256%3A<digest>`). Both forms are accepted.
+
 At least one component with a valid OCI `purl` is required; components without an OCI `purl` are excluded from analysis.
 
 Optionally, the product package MAY include a CPE in `externalRefs` (`referenceCategory` `SECURITY`, `referenceType` `cpe22Type`). If the CPE exists, it will be stored in the product metadata.
