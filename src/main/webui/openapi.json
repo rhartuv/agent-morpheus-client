@@ -225,18 +225,12 @@
         "description": "Data Transfer Object for submitting user feedback about a specific report.",
         "type": "object",
         "required": [
-          "response",
           "rating",
-          "reportId",
           "accuracy",
           "reasoning",
           "checklist"
         ],
         "properties": {
-          "response": {
-            "type": "string",
-            "description": "The response feedback"
-          },
           "rating": {
             "type": "integer",
             "format": "int32",
@@ -247,10 +241,6 @@
           "comment": {
             "type": "string",
             "description": "Additional comment or feedback text"
-          },
-          "reportId": {
-            "type": "string",
-            "description": "Unique identifier of the report"
           },
           "accuracy": {
             "type": "string",
@@ -263,6 +253,46 @@
           "checklist": {
             "type": "string",
             "description": "Checklist assessment of the report"
+          }
+        }
+      },
+      "FeedbackResponse": {
+        "description": "Submitted feedback for a report.",
+        "type": "object",
+        "required": [
+          "rating",
+          "accuracy",
+          "reasoning",
+          "checklist",
+          "submittedAt"
+        ],
+        "properties": {
+          "rating": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 5,
+            "minimum": 1,
+            "description": "Rating value from 1 to 5"
+          },
+          "comment": {
+            "type": "string",
+            "description": "Additional comment or feedback text"
+          },
+          "accuracy": {
+            "type": "string",
+            "description": "Accuracy assessment of the report"
+          },
+          "reasoning": {
+            "type": "string",
+            "description": "Reasoning or explanation of the report"
+          },
+          "checklist": {
+            "type": "string",
+            "description": "Checklist assessment of the report"
+          },
+          "submittedAt": {
+            "type": "string",
+            "description": "Timestamp when feedback was submitted"
           }
         }
       },
@@ -2060,52 +2090,10 @@
         ]
       }
     },
-    "/api/v1/feedback": {
-      "post": {
-        "summary": "Submit user feedback for an AI response",
-        "description": "Submits user feedback for an AI response to the feedback service",
-        "requestBody": {
-          "description": "User feedback data",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Feedback"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Feedback successfully processed",
-            "content": {
-              "application/json": {
-                "examples": {
-                  "Success Response": {
-                    "value": {
-                      "status": "success"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error"
-          },
-          "400": {
-            "description": "Bad Request"
-          }
-        },
-        "tags": [
-          "Feedback Resource"
-        ]
-      }
-    },
-    "/api/v1/feedback/{reportId}/exists": {
+    "/api/v1/reports/{reportId}/feedback": {
       "get": {
-        "summary": "Check if feedback exists for a report",
-        "description": "Checks if feedback has been submitted for a specific report",
+        "summary": "Get submitted feedback for a report",
+        "description": "Returns the authenticated user's submitted feedback for the given report, or 404 if none",
         "parameters": [
           {
             "description": "Report identifier",
@@ -2119,23 +2107,64 @@
         ],
         "responses": {
           "200": {
-            "description": "Feedback existence status retrieved successfully",
+            "description": "Feedback retrieved successfully",
             "content": {
               "application/json": {
-                "examples": {
-                  "Feedback exists": {
-                    "value": {
-                      "exists": true
-                    }
-                  },
-                  "Feedback does not exist": {
-                    "value": {
-                      "exists": false
-                    }
-                  }
+                "schema": {
+                  "$ref": "#/components/schemas/FeedbackResponse"
                 }
               }
             }
+          },
+          "404": {
+            "description": "No feedback found for this report"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "tags": [
+          "Feedback Resource"
+        ]
+      },
+      "post": {
+        "summary": "Submit user feedback for a report",
+        "description": "Submits user feedback for the given report and persists it in MongoDB",
+        "parameters": [
+          {
+            "description": "Report identifier",
+            "required": true,
+            "name": "reportId",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "User feedback data",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Feedback"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Feedback successfully saved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedbackResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Feedback already submitted for this report"
           },
           "500": {
             "description": "Internal server error"

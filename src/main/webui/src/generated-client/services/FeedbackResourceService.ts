@@ -3,56 +3,66 @@
 /* tslint:disable */
 /* eslint-disable */
 import type { Feedback } from '../models/Feedback';
+import type { FeedbackResponse } from '../models/FeedbackResponse';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import { OpenAPI } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
 export class FeedbackResourceService {
     /**
-     * Submit user feedback for an AI response
-     * Submits user feedback for an AI response to the feedback service
-     * @returns any Feedback successfully processed
+     * Get submitted feedback for a report
+     * Returns the authenticated user's submitted feedback for the given report, or 404 if none
+     * @returns FeedbackResponse Feedback retrieved successfully
      * @throws ApiError
      */
-    public static postApiV1Feedback({
-        requestBody,
-    }: {
-        /**
-         * User feedback data
-         */
-        requestBody: Feedback,
-    }): CancelablePromise<any> {
-        return __request(OpenAPI, {
-            method: 'POST',
-            url: '/api/v1/feedback',
-            body: requestBody,
-            mediaType: 'application/json',
-            errors: {
-                400: `Bad Request`,
-                500: `Internal server error`,
-            },
-        });
-    }
-    /**
-     * Check if feedback exists for a report
-     * Checks if feedback has been submitted for a specific report
-     * @returns any Feedback existence status retrieved successfully
-     * @throws ApiError
-     */
-    public static getApiV1FeedbackExists({
+    public static getApiV1ReportsFeedback({
         reportId,
     }: {
         /**
          * Report identifier
          */
         reportId: string,
-    }): CancelablePromise<any> {
+    }): CancelablePromise<FeedbackResponse> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/api/v1/feedback/{reportId}/exists',
+            url: '/api/v1/reports/{reportId}/feedback',
             path: {
                 'reportId': reportId,
             },
             errors: {
+                404: `No feedback found for this report`,
+                500: `Internal server error`,
+            },
+        });
+    }
+    /**
+     * Submit user feedback for a report
+     * Submits user feedback for the given report and persists it in MongoDB
+     * @returns FeedbackResponse Feedback successfully saved
+     * @throws ApiError
+     */
+    public static postApiV1ReportsFeedback({
+        reportId,
+        requestBody,
+    }: {
+        /**
+         * Report identifier
+         */
+        reportId: string,
+        /**
+         * User feedback data
+         */
+        requestBody: Feedback,
+    }): CancelablePromise<FeedbackResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/reports/{reportId}/feedback',
+            path: {
+                'reportId': reportId,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+            errors: {
+                409: `Feedback already submitted for this report`,
                 500: `Internal server error`,
             },
         });

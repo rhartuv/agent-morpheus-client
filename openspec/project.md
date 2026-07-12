@@ -227,10 +227,6 @@ Standard labels used to categorize vulnerability analysis results:
   - Endpoint: Configurable via `quarkus.rest-client.component-syncer.url`
   - Knative eventing integration
 
-- **Feedback API**: For user feedback collection
-  - Endpoint: Configurable via `quarkus.rest-client.feedback-api.url`
-  - Used for collecting user comments and feedback
-
 ### Infrastructure
 - **MongoDB**: Primary data store for reports, products, vulnerabilities
   - Database: `exploit-iq-client` (configurable)
