@@ -56,7 +56,8 @@ The backend SHALL expose REST endpoints for submitting and retrieving feedback f
 - **WHEN** the client sends POST to `/api/v1/reports/{reportId}/feedback` with a valid JSON body (rating, accuracy, reasoning, checklist, optional comment)
 - **THEN** FeedbackResource receives the request and delegates to FeedbackService
 - **AND** FeedbackService resolves the authenticated `userId` and persists the feedback via FeedbackRepositoryService
-- **AND** on success the backend returns **200** with feedback fields and `submittedAt`
+- **AND** on success the backend returns **201** with feedback fields and `submittedAt`
+- **AND** when the report does not exist the backend returns **404**
 - **AND** on duplicate submission the backend returns 409 with an error message
 - **AND** on unexpected persistence failure the backend returns 500 with an error message
 

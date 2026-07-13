@@ -2153,8 +2153,8 @@
           "required": true
         },
         "responses": {
-          "200": {
-            "description": "Feedback successfully saved",
+          "201": {
+            "description": "Feedback successfully created",
             "content": {
               "application/json": {
                 "schema": {
@@ -2165,6 +2165,12 @@
           },
           "409": {
             "description": "Feedback already submitted for this report"
+          },
+          "400": {
+            "description": "Invalid request body"
+          },
+          "404": {
+            "description": "Report not found"
           },
           "500": {
             "description": "Internal server error"

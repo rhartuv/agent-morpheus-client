@@ -37,7 +37,7 @@ export class FeedbackResourceService {
     /**
      * Submit user feedback for a report
      * Submits user feedback for the given report and persists it in MongoDB
-     * @returns FeedbackResponse Feedback successfully saved
+     * @returns FeedbackResponse Feedback successfully created
      * @throws ApiError
      */
     public static postApiV1ReportsFeedback({
@@ -62,6 +62,7 @@ export class FeedbackResourceService {
             body: requestBody,
             mediaType: 'application/json',
             errors: {
+                404: `Report not found`,
                 409: `Feedback already submitted for this report`,
                 500: `Internal server error`,
             },
