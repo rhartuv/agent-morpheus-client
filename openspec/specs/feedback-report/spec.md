@@ -1,10 +1,8 @@
 # feedback-report Specification
 
 ## Purpose
-Allow users to submit structured feedback on a repository report so that AI model accuracy can be improved. Feedback is collected via a card on the repository report page. The backend receives feedback via REST and forwards it to an external feedback service .
-
+Allow users to submit structured feedback on a repository report so that AI model accuracy can be improved. Feedback is collected via a card on the repository report page. The backend persists feedback in MongoDB and exposes REST endpoints for submit and retrieve.
 ## Requirements
-
 ### Requirement: Feedback Card Content
 The Feedback card SHALL display the title "Feedback" and the subtitle "Your feedback will be used to improve the accuracy of our AI models." and SHALL be implemented as `FeedbackReportCard`.
 
@@ -31,33 +29,78 @@ The card SHALL collect the following. Required fields SHALL be marked with an as
 - **THEN** comment may be omitted; when provided, it is sent as `comment` in the payload
 
 ### Requirement: Frontend API Usage
-The card SHALL use only the generated client: `FeedbackResourceService.postApiV1Feedback` for submit (e.g. via `useExecuteApi`) and `FeedbackResourceService.getApiV1FeedbackExists` for existence check (e.g. via `useApi`). The request body SHALL conform to `Feedback` (reportId, response/aiResponse, rating, accuracy, reasoning, checklist, optional comment). When feedback already exists for the report, the card SHALL show an already-submitted state instead of the form.
+The card SHALL use only the generated client: `FeedbackResourceService.postApiV1ReportsFeedback` for submit (e.g. via `useExecuteApi`) and `FeedbackResourceService.getApiV1ReportsFeedback` to load submitted feedback (e.g. via `useSubmittedFeedback`). The request body for submit SHALL conform to `Feedback` (rating, accuracy, reasoning, checklist, optional comment); `reportId` is taken from the URL path only. On load, a **404** from GET SHALL mean no feedback yet and the card SHALL show the editable form; a **200** SHALL show the read-only submitted view.
 
 #### Scenario: Submit via generated client
 - **WHEN** the user fills required fields and clicks "Submit Feedback"
-- **THEN** the app calls `postApiV1Feedback` with the collected data and no direct fetch/axios
+- **THEN** the app calls `postApiV1ReportsFeedback` with the collected data and no direct fetch/axios
 
-#### Scenario: Already-submitted state
-- **WHEN** the card loads and `getApiV1FeedbackExists` returns exists true for the report
-- **THEN** the card shows the already-submitted state (e.g. “Thank you! You already submitted feedback on this report.”) and does not show the feedback form
+#### Scenario: Read-only submitted state after submit
+- **WHEN** the user successfully submits feedback
+- **THEN** the card uses the POST response to show the read-only view (no extra GET refetch)
+- **AND** displays the submitted accuracy, reasoning, checklist, rating, and comment (if any) in a read-only layout matching the form field labels
+- **AND** does not show the editable form
+
+#### Scenario: Read-only submitted state on reload
+- **WHEN** the card loads and `getApiV1ReportsFeedback` returns **200** for the report
+- **THEN** the card displays the read-only submitted view instead of the feedback form
+
+#### Scenario: Form shown when no prior feedback
+- **WHEN** the card loads and `getApiV1ReportsFeedback` returns **404** for the report
+- **THEN** the card displays the editable feedback form
 
 ### Requirement: Backend Feedback Processing
-The backend SHALL expose REST endpoints for submitting feedback and checking whether feedback exists for a report. It SHALL forward submission to an external feedback service (e.g. Flask API) and return success or error accordingly. It SHALL not persist feedback locally; the external service is the source of truth.
+The backend SHALL expose REST endpoints for submitting and retrieving feedback for the authenticated user under `/api/v1/reports/{reportId}/feedback`. It SHALL persist feedback in MongoDB via `FeedbackRepositoryService` and SHALL NOT forward submissions to an external feedback service. The `userId` used for persistence and queries SHALL be derived from the authenticated session. Feedback SHALL be immutable after insert.
 
 #### Scenario: Submit feedback flow
-- **WHEN** the client sends POST to `/api/v1/feedback` with a valid JSON body (reportId, response, rating, accuracy, reasoning, checklist, optional comment)
-- **THEN** FeedbackResource receives the request and forwards the DTO to FeedbackService
-- **AND** FeedbackService calls the external FeedbackApi (configurable feedback-api client) to submit the feedback
-- **AND** on success the backend returns 200 with body `{"status":"success"}`
-- **AND** on external call failure the backend returns 500 with an error message
+- **WHEN** the client sends POST to `/api/v1/reports/{reportId}/feedback` with a valid JSON body (rating, accuracy, reasoning, checklist, optional comment)
+- **THEN** FeedbackResource receives the request and delegates to FeedbackService
+- **AND** FeedbackService resolves the authenticated `userId` and persists the feedback via FeedbackRepositoryService
+- **AND** on success the backend returns **201** with feedback fields and `submittedAt`
+- **AND** when the report does not exist the backend returns **404**
+- **AND** on duplicate submission the backend returns 409 with an error message
+- **AND** on unexpected persistence failure the backend returns 500 with an error message
 
-#### Scenario: Check feedback existence flow
-- **WHEN** the client sends GET to `/api/v1/feedback/{reportId}/exists` (to decide whether to show the form or already-submitted state)
-- **THEN** FeedbackResource delegates to FeedbackService.checkFeedbackExists(reportId)
-- **AND** FeedbackService calls the external FeedbackApi to determine if feedback exists for that report
-- **AND** the backend returns 200 with body `{"exists":true}` or `{"exists":false}`
+#### Scenario: Retrieve feedback flow
+- **WHEN** the client sends GET to `/api/v1/reports/{reportId}/feedback` for the authenticated user
+- **THEN** FeedbackResource delegates to FeedbackService
+- **AND** FeedbackService queries MongoDB for a document matching `reportId` and the authenticated `userId`
+- **AND** when found the backend returns **200** with feedback fields and `submittedAt`
+- **AND** when not found the backend returns **404**
 
 #### Scenario: Backend error handling
-- **WHEN** the external feedback API call fails (submit or exists check)
+- **WHEN** a feedback persistence or query operation fails unexpectedly
 - **THEN** the backend logs the error and returns 500 with a JSON error payload
 - **AND** the client receives a non-2xx response and may display an error message
+
+### Requirement: Feedback Persistence
+
+The backend SHALL persist user feedback in a MongoDB collection named `feedbacks`. Collection initialization SHALL follow the existing repository pattern: indexes are created at application startup via `@PostConstruct` using idempotent `createIndex` calls. A composite unique index on `report_id` and `user_id` SHALL enforce at most one feedback document per user per report.
+
+#### Scenario: Collection and index initialization
+
+- **WHEN** the application starts
+- **THEN** `FeedbackRepositoryService` initializes the `feedbacks` collection indexes
+- **AND** a composite unique index on `report_id` and `user_id` exists
+
+#### Scenario: Persist feedback on submit
+
+- **WHEN** an authenticated user submits valid feedback via `POST /api/v1/reports/{reportId}/feedback`
+- **THEN** the backend stores a document in `feedbacks` with `report_id`, `user_id` (from the authenticated session, not the request body), `rating`, `accuracy`, `reasoning`, `checklist`, optional `comment`, and `submitted_at`
+- **AND** the backend does not call an external feedback service
+
+### Requirement: Feedback Immutability Policy
+
+Users SHALL NOT be able to update or delete feedback after submission. The API SHALL expose insert and read operations only; no `PUT`, `PATCH`, or `DELETE` feedback endpoints SHALL be provided.
+
+#### Scenario: Duplicate submission rejected
+
+- **WHEN** an authenticated user submits feedback for a report for which they already have a `feedbacks` document
+- **THEN** the backend returns **409 Conflict** with an error message indicating feedback was already submitted
+- **AND** the existing document is unchanged
+
+#### Scenario: No edit or delete endpoints
+
+- **WHEN** a client attempts to update or delete an existing feedback record
+- **THEN** no supported API endpoint exists for that operation
+

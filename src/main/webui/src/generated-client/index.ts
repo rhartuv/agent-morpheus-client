@@ -14,6 +14,7 @@ export type { ErrorResponse } from './models/ErrorResponse';
 export type { Eval } from './models/Eval';
 export type { FailedComponent } from './models/FailedComponent';
 export type { Feedback } from './models/Feedback';
+export type { FeedbackResponse } from './models/FeedbackResponse';
 export type { Image } from './models/Image';
 export type { InlineCredential } from './models/InlineCredential';
 export type { Job } from './models/Job';

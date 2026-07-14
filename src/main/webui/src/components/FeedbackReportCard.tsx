@@ -10,7 +10,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import type { CSSProperties } from "react";
 import {
   Card,
@@ -42,16 +42,21 @@ import {
   HelperTextItem,
 } from "@patternfly/react-core";
 import { ExclamationCircleIcon } from "@patternfly/react-icons";
-import { useApi } from "../hooks/useApi";
 import { getErrorMessage } from "../utils/errorHandling";
 import { useExecuteApi } from "../hooks/useExecuteApi";
+import { useSubmittedFeedback } from "../hooks/useSubmittedFeedback";
 import { FeedbackResourceService } from "../generated-client";
-import type { Feedback } from "../generated-client";
+import type { Feedback, FeedbackResponse } from "../generated-client";
+import FeedbackSubmittedFields from "./FeedbackSubmittedFields";
+import {
+  FEEDBACK_COMMENT_LABEL,
+  FEEDBACK_DROPDOWN_FIELDS,
+  FEEDBACK_RATING_LABEL,
+} from "../utils/feedbackFormConfig";
 
 const DROPDOWN_CONFIG = [
   {
-    key: "accuracy" as const,
-    label: "How accurate do you find ExploitIQ's assessment?",
+    ...FEEDBACK_DROPDOWN_FIELDS[0],
     options: [
       "Very Accurate",
       "Mostly Accurate",
@@ -60,14 +65,11 @@ const DROPDOWN_CONFIG = [
     ],
   },
   {
-    key: "reasoning" as const,
-    label:
-      "Is the reasoning and summary of findings clear, complete, and well-supported?",
+    ...FEEDBACK_DROPDOWN_FIELDS[1],
     options: ["Yes", "Mostly", "Somewhat", "No"],
   },
   {
-    key: "checklist" as const,
-    label: "Were the checklist questions and explanations easy to understand?",
+    ...FEEDBACK_DROPDOWN_FIELDS[2],
     options: ["Yes", "Mostly", "Somewhat", "No"],
   },
 ];
@@ -167,7 +169,7 @@ function FeedbackForm({
       ))}
 
       <FormGroup
-        label="Rate the response (1 = Poor, 5 = Excellent)"
+        label={FEEDBACK_RATING_LABEL}
         fieldId="rating"
         isRequired
       >
@@ -195,7 +197,7 @@ function FeedbackForm({
       </FormGroup>
 
       <FormGroup
-        label="Do you have any additional feedback or suggestions to improve the analysis?"
+        label={FEEDBACK_COMMENT_LABEL}
         fieldId="comment"
       >
         <TextArea
@@ -234,15 +236,11 @@ function FeedbackForm({
 
 interface FeedbackReportCardProps {
   reportId: string;
-  /** AI response content for this report (sent as feedback context to the backend) */
-  aiResponse: string;
 }
 
-interface FeedbackExistsResponse {
-  exists?: boolean;
-}
-
-export default function FeedbackReportCard({ reportId, aiResponse }: FeedbackReportCardProps) {
+export default function FeedbackReportCard({ reportId }: FeedbackReportCardProps) {
+  const { feedback, loading: feedbackLoading, error: feedbackError, setFeedback } =
+    useSubmittedFeedback(reportId);
   const [rating, setRating] = useState<number | null>(null);
   const [comment, setComment] = useState("");
   const [fieldErrors, setFieldErrors] =
@@ -258,37 +256,27 @@ export default function FeedbackReportCard({ reportId, aiResponse }: FeedbackRep
     checklist: false,
   });
 
-  const {
-    data: existsData,
-    loading: existsLoading,
-    error: existsError,
-  } = useApi<FeedbackExistsResponse>(
-    () =>
-      FeedbackResourceService.getApiV1FeedbackExists({
-        reportId,
-      }),
-    { deps: [reportId] }
-  );
-
   const buildRequestBody = useCallback((): Feedback => ({
-    reportId,
-    response: aiResponse,
     rating: rating ?? 0,
     accuracy: values.accuracy ?? "",
     reasoning: values.reasoning ?? "",
     checklist: values.checklist ?? "",
     ...(comment.trim() ? { comment: comment.trim() } : {}),
-  }), [reportId, aiResponse, rating, values, comment]);
+  }), [rating, values, comment]);
 
   const { data: submitResult, loading: submitting, error: submitError, execute: submitFeedback } =
-    useExecuteApi<unknown>(() =>
-      FeedbackResourceService.postApiV1Feedback({
+    useExecuteApi<FeedbackResponse>(() =>
+      FeedbackResourceService.postApiV1ReportsFeedback({
+        reportId,
         requestBody: buildRequestBody(),
       })
     );
 
-  const previousSubmission = existsData?.exists === true;
-  const submitted = previousSubmission || submitResult != null;
+  useEffect(() => {
+    if (submitResult != null) {
+      setFeedback(submitResult);
+    }
+  }, [submitResult, setFeedback]);
 
   const setOpen = (key: string, open: boolean) => {
     setOpens((o) => ({ ...o, [key]: open }));
@@ -338,7 +326,7 @@ export default function FeedbackReportCard({ reportId, aiResponse }: FeedbackRep
     </CardTitle>
   );
 
-  if (existsLoading) {
+  if (feedbackLoading) {
     return (
       <Card>
         {feedbackCardTitle}
@@ -366,8 +354,8 @@ export default function FeedbackReportCard({ reportId, aiResponse }: FeedbackRep
     );
   }
 
-  if (existsError) {
-    const errorStatus = (existsError as { status?: number })?.status;
+  if (feedbackError) {
+    const errorStatus = (feedbackError as { status?: number })?.status;
     return (
       <Card>
         {feedbackCardTitle}
@@ -375,18 +363,18 @@ export default function FeedbackReportCard({ reportId, aiResponse }: FeedbackRep
           <EmptyState
             headingLevel="h4"
             icon={ExclamationCircleIcon}
-            titleText="Could not load feedback status"
+            titleText="Could not load feedback"
           >
             <EmptyStateBody>
               {errorStatus ? (
                 <>
                   <p>
-                    {errorStatus}: {getErrorMessage(existsError)}
+                    {errorStatus}: {getErrorMessage(feedbackError)}
                   </p>
-                  Feedback status for this report could not be retrieved.
+                  Feedback for this report could not be retrieved.
                 </>
               ) : (
-                getErrorMessage(existsError)
+                getErrorMessage(feedbackError)
               )}
             </EmptyStateBody>
           </EmptyState>
@@ -395,17 +383,18 @@ export default function FeedbackReportCard({ reportId, aiResponse }: FeedbackRep
     );
   }
 
-  if (submitted) {
+  if (feedback) {
     return (
       <Card>
         {feedbackCardTitle}
         <CardBody>
-          <EmptyState status="success" titleText="Feedback Sent" headingLevel="h4">
-            <EmptyStateBody>
-              Thank you, we appreciate your feedback. Your feedback will be used to improve the
-              accuracy of our AI models.
-            </EmptyStateBody>
-          </EmptyState>
+          <Content style={{ marginBottom: "var(--pf-t--global--spacer--xl)" }}>
+            Thank you, we appreciate your feedback. Your feedback will be used to improve the
+            accuracy of our AI models.
+          </Content>
+          <div style={FEEDBACK_FIELDS_WIDTH_STYLE}>
+            <FeedbackSubmittedFields feedback={feedback} />
+          </div>
         </CardBody>
       </Card>
     );

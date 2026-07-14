@@ -7,10 +7,6 @@
  */
 export type Feedback = {
     /**
-     * The response feedback
-     */
-    response: string;
-    /**
      * Rating value from 1 to 5
      */
     rating: number;
@@ -18,10 +14,6 @@ export type Feedback = {
      * Additional comment or feedback text
      */
     comment?: string;
-    /**
-     * Unique identifier of the report
-     */
-    reportId: string;
     /**
      * Accuracy assessment of the report
      */
@@ -35,4 +27,3 @@ export type Feedback = {
      */
     checklist: string;
 };
-

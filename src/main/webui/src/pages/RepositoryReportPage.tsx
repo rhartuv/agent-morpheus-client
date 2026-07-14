@@ -37,7 +37,6 @@ import RepositoryAdditionalDetailsCard from "../components/RepositoryAdditionalD
 import RepositoryReportPageSkeleton from "../components/RepositoryReportPageSkeleton";
 import DownloadDropdown from "../components/DownloadVex";
 import FeedbackReportCard from "../components/FeedbackReportCard";
-import { getReportSummaryForFeedback } from "../utils/feedbackReportSummary";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import {
   pageTitleRepositoryReport,
@@ -122,11 +121,6 @@ const RepositoryReportPage: React.FC = () => {
     loading,
     error,
   } = useRepositoryReport(reportId || "");
-
-  const feedbackAiSummary = useMemo(
-    () => (report ? getReportSummaryForFeedback(report) : ""),
-    [report]
-  );
 
   const documentTitle = useMemo(() => {
     if (!cveId) {
@@ -285,10 +279,7 @@ const RepositoryReportPage: React.FC = () => {
         </GridItem>
         {status === "completed" && (
           <GridItem>
-            <FeedbackReportCard
-              reportId={reportId || ""}
-              aiResponse={feedbackAiSummary}
-            />
+            <FeedbackReportCard reportId={reportId || ""} />
           </GridItem>
         )}
       </Grid>
