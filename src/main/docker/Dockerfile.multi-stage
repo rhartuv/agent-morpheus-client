@@ -19,7 +19,13 @@ RUN ./mvnw -B -Pnative org.apache.maven.plugins:maven-dependency-plugin:3.6.1:go
 COPY --chown=quarkus:quarkus src /code/src
 RUN ./mvnw verify -B -Pnative -Dmaven.test.skip=true -Dquarkus.profile=${QUARKUS_PROFILE} -Dquarkus.native.native-image-xmx=8g
 
-RUN curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /tmp
+# Pin Syft with checksum verification (APPENG-5702 / T-041) — do not use curl|sh from main
+ARG SYFT_VERSION=1.46.0
+ARG SYFT_SHA256=d654f678b709eb53c393d38519d5ed7d2e57205529404018614cfefa0fb2b5ca
+RUN curl -sSfL "https://github.com/anchore/syft/releases/download/v${SYFT_VERSION}/syft_${SYFT_VERSION}_linux_amd64.tar.gz" -o /tmp/syft.tar.gz \
+  && echo "${SYFT_SHA256}  /tmp/syft.tar.gz" | sha256sum -c - \
+  && tar -xzf /tmp/syft.tar.gz -C /tmp syft \
+  && rm /tmp/syft.tar.gz
 
 ## Stage 2 : create the docker final image
 FROM registry.redhat.io/ubi9/ubi-minimal:9.7
