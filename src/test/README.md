@@ -48,7 +48,7 @@ For project-wide conventions (Surefire vs Failsafe, quality gates), see `openspe
 
 ## CI test pipeline image
 
-The Tekton task **`.tekton/tekton-tasks/maven-test-ci.yaml`** runs **`./mvnw test`** inside **`quay.io/ecosystem-appeng/exploit-iq-test-image:latest`**. That image bundles **JDK 21** (UBI OpenJDK) and **Syft** on `PATH`, using the same Syft install approach as **`src/main/docker/Dockerfile.multi-stage`** (install on Mandrel builder, copy `/tmp/syft` into the runtime layer) so `install.sh` has `gzip`/`tar` available.
+The Tekton task **`.tekton/tekton-tasks/maven-test-ci.yaml`** runs **`./mvnw test`** inside **`quay.io/ecosystem-appeng/exploit-iq-test-image:latest`**. That image bundles **JDK 21** (UBI OpenJDK) and **Syft** on `PATH`, using the same pinned Syft install as **`src/main/docker/Dockerfile.multi-stage`** (download release tarball + SHA256 verify on Mandrel builder, copy `/tmp/syft` into the runtime layer) so `gzip`/`tar` are available for extraction.
 
 Pipelines expect that image tag to exist in Quay before `maven-test` can succeed.
 
