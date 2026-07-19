@@ -4,8 +4,39 @@
   "version": "1.0.0",
   "cveId": "CVE-2024-99999",
   "submittedAt": "2025-02-10T10:00:00.000000Z",
-  "submittedCount": 2,
+  "submittedCount": 5,
+  "completedAt": "2025-02-10T10:30:00.000000Z",
   "metadata": {},
-  "submissionFailures": []
+  "submissionFailures": [
+    {
+      "name": "excluded-component-1",
+      "version": "1.0.0",
+      "image": "pkg:oci/excluded-component-1@sha256:aaa111",
+      "error": "Component excluded from analysis due to unsupported package type"
+    },
+    {
+      "name": "excluded-component-2",
+      "version": "1.0.0",
+      "image": "pkg:oci/excluded-component-2@sha256:aaa222",
+      "error": "Component excluded from analysis due to unsupported package type"
+    },
+    {
+      "name": "excluded-component-3",
+      "version": "1.0.0",
+      "image": "pkg:oci/excluded-component-3@sha256:aaa333",
+      "error": "Component excluded from analysis due to unsupported package type"
+    },
+    {
+      "name": "excluded-component-4",
+      "version": "1.0.0",
+      "image": "pkg:oci/excluded-component-4@sha256:aaa444",
+      "error": "Component excluded from analysis due to unsupported package type"
+    },
+    {
+      "name": "excluded-component-5",
+      "version": "1.0.0",
+      "image": "pkg:oci/excluded-component-5@sha256:aaa555",
+      "error": "Component excluded from analysis due to unsupported package type"
+    }
+  ]
 }
-

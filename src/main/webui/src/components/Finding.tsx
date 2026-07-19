@@ -37,6 +37,12 @@ export const FailedStatus: React.FC = () => (
   </Label>
 );
 
+export const NoComponentsAnalyzedStatus: React.FC = () => (
+  <Label color="purple" variant="filled">
+    No components analyzed
+  </Label>
+);
+
 const Finding: React.FC<FindingProps> = ({ finding }) => {
   if (!finding) return null;
   
@@ -56,10 +62,8 @@ const Finding: React.FC<FindingProps> = ({ finding }) => {
       label = "Not vulnerable";
       color = apiToColor(JUSTIFICATION_API.NOT_VULNERABLE);
       break;
-    case "excluded":
-      label = "Excluded";
-      color = "grey";
-      break;
+    case "no-components-analyzed":
+      return <NoComponentsAnalyzedStatus />;
     case "uncertain":
       label = "Uncertain";
       color = apiToColor(JUSTIFICATION_API.UNCERTAIN);
