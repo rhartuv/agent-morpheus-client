@@ -5,7 +5,7 @@ TBD - created by archiving change add-report-deletion-audit-trail. Update Purpos
 ## Requirements
 ### Requirement: Append-only report audit collection
 
-The backend SHALL persist report destructive-operation audit records in a dedicated MongoDB collection named `report_audit_trail`. Collection initialization SHALL follow the existing repository pattern: indexes are created at application startup via `@PostConstruct` using idempotent `createIndex` calls. The repository layer SHALL expose **insert only**; no update, delete, or REST endpoints SHALL mutate or remove audit documents.
+The backend SHALL persist report destructive-operation audit records in a dedicated MongoDB collection named `report_audit_trail`. Collection initialization SHALL follow the existing repository pattern: indexes are created at application startup via `@PostConstruct` using idempotent `createIndex` calls. The repository layer SHALL NOT expose generic update or delete APIs. The only permitted mutation of an audit document is setting `deleted` from `false` to `true` after the corresponding report removal succeeds, via `ReportAuditService.deleteSucceeded`.
 
 Each audit document SHALL contain:
 
@@ -14,18 +14,21 @@ Each audit document SHALL contain:
 - `operation` — one of `DELETE_SINGLE`, `DELETE_BULK`, `DELETE_BULK_FILTER`, `DELETE_BY_PRODUCT`, `DELETE_BY_PRODUCTS`, `MODIFY_STATUS`, `DELETE_PURGE`
 - `report_ids` — array of affected report MongoDB ObjectId hex strings
 - `context` (optional) — operation-specific metadata such as query filters, product IDs, scan ID, error type/message, or purge threshold
+- `deleted` — `false` when the audit intent is recorded; `true` only after report removal succeeds
 
 #### Scenario: Collection initialized at startup
 
 - **WHEN** the application starts
 - **THEN** `ReportAuditRepositoryService` initializes indexes on `report_audit_trail`
-- **AND** the repository exposes no update or delete methods
+- **AND** the repository does not expose generic update or delete methods
 
-#### Scenario: Audit record inserted before mutation
+#### Scenario: Audit intent recorded before deletion, confirmed after success
 
-- **WHEN** a destructive report operation is initiated through `ReportService`
-- **THEN** an audit document is inserted into `report_audit_trail` before the report delete or status update is applied
+- **WHEN** a report deletion is initiated through `ReportService`
+- **THEN** an audit document is inserted into `report_audit_trail` with `deleted=false` before the report delete is applied
 - **AND** if audit insertion fails, the destructive operation SHALL NOT proceed
+- **AND** when report removal succeeds, `deleted` is updated to `true` via `deleteSucceeded`
+- **AND** when report removal fails, the audit document remains with `deleted=false`
 
 ### Requirement: Authenticated actor on REST destructive operations
 
