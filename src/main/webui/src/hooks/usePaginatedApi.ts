@@ -186,9 +186,9 @@ export function usePaginatedApi<T>(
       }
 
       if (!response.ok) {
-        if (response.status === 401) {
+        if (response.status === 401 || response.status === 499) {
           redirectToLogin();
-          throw new Error('HTTP 401: Unauthorized');
+          throw new Error(`HTTP ${response.status}: Unauthorized`);
         }
         const errorText = await response.text().catch(() => 'Unknown error');
         throw new Error(`HTTP ${response.status}: ${errorText}`);

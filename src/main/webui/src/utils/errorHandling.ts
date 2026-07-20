@@ -20,14 +20,23 @@ import type { ValidationErrorResponse } from "../generated-client/models/Validat
 let unauthorizedRedirectInProgress = false;
 
 /**
+ * Quarkus OIDC returns 499 for SPA/XHR when
+ * {@code java-script-auto-redirect=false} and re-authentication is required.
+ * 401 covers bearer/missing-auth cases.
+ */
+function isAuthChallengeStatus(status: number): boolean {
+  return status === 401 || status === 499;
+}
+
+/**
  * Returns true when the error indicates an expired or missing authentication session.
- * Covers generated-client {@link ApiError} (401) and fetch-style `HTTP 401: ...` errors.
+ * Covers generated-client {@link ApiError} (401/499) and fetch-style `HTTP 401|499: ...` errors.
  */
 export function isUnauthorizedError(error: unknown): boolean {
   if (error instanceof ApiError) {
-    return error.status === 401;
+    return isAuthChallengeStatus(error.status);
   }
-  if (error instanceof Error && /^HTTP 401\b/.test(error.message)) {
+  if (error instanceof Error && /^HTTP (401|499)\b/.test(error.message)) {
     return true;
   }
   return false;
@@ -49,7 +58,7 @@ export function redirectToLogin(): void {
 }
 
 /**
- * On 401 Unauthorized, redirects to login via {@link redirectToLogin}.
+ * On 401/499 auth challenge, redirects to login via {@link redirectToLogin}.
  *
  * @returns true if a redirect was started (caller should stop showing the error)
  */

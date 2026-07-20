@@ -13,7 +13,10 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
+import { configureApiClient } from "./config/apiClient";
 import "@patternfly/react-core/dist/styles/base.css";
+
+configureApiClient();
 
 /**
  * Conditionally enable MSW mocking based on environment variable

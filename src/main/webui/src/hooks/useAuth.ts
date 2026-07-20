@@ -16,6 +16,7 @@
  */
 
 import { useApi } from './useApi';
+import { JS_REQUEST_HEADER } from '../config/apiClient';
 import { redirectToLogin } from '../utils/errorHandling';
 
 export interface UserInfo {
@@ -42,13 +43,14 @@ export function useAuth() {
     async () => {
       const response = await fetch('/api/v1/user', {
         headers: {
-          'Accept': 'application/json',
+          Accept: 'application/json',
+          ...JS_REQUEST_HEADER,
         },
         credentials: 'include', // Include cookies for authentication
       });
 
       if (!response.ok) {
-        if (response.status === 401) {
+        if (response.status === 401 || response.status === 499) {
           redirectToLogin();
           throw new Error('Unauthorized - redirecting to login');
         }
