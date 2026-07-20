@@ -8,6 +8,8 @@
     "dev:msw": "VITE_ENABLE_MSW=true vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "openapi:postprocess": "jq 'del(.servers)' ../../../target/generated/openapi/openapi.json > openapi.json.tmp && mv openapi.json.tmp openapi.json || (echo 'Warning: OpenAPI spec not found. Run openapi:generate first.' && exit 1)",
     "openapi:generate": "cd ../../.. && ./mvnw clean package -DskipTests -Dquarkus.quinoa.enabled=false && cd src/main/webui && npm run openapi:postprocess",
@@ -43,7 +45,8 @@
     "openapi-typescript": "^7.0.0",
     "openapi-typescript-codegen": "^0.29.0",
     "typescript": "^5.5.4",
-    "vite": "^5.4.2"
+    "vite": "^5.4.2",
+    "vitest": "^3.2.7"
   },
   "msw": {
     "workerDirectory": [

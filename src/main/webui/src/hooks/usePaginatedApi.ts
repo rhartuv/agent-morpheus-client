@@ -187,8 +187,10 @@ export function usePaginatedApi<T>(
 
       if (!response.ok) {
         if (response.status === 401 || response.status === 499) {
+          // Reload starts the OIDC challenge; return without throwing so the catch
+          // block does not call redirectToLoginIfUnauthorized again.
           redirectToLogin();
-          throw new Error(`HTTP ${response.status}: Unauthorized`);
+          return;
         }
         const errorText = await response.text().catch(() => 'Unknown error');
         throw new Error(`HTTP ${response.status}: ${errorText}`);

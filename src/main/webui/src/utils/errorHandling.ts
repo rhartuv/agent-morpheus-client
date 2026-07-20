@@ -52,9 +52,15 @@ export function redirectToLogin(): void {
     return;
   }
   unauthorizedRedirectInProgress = true;
+  sessionStorage.clear();
   // Same-document reload (not assign of a constructed URL) so Quarkus can start
   // the OIDC login challenge for the current path after the session is gone.
   window.location.reload();
+}
+
+/** Resets redirect guard state. Intended for unit tests only. */
+export function resetUnauthorizedRedirectState(): void {
+  unauthorizedRedirectInProgress = false;
 }
 
 /**
@@ -170,7 +176,11 @@ export function parseRequestAnalysisSubmissionError(
   fallbackMessage: string = DEFAULT_SUBMISSION_ERROR
 ): RequestAnalysisSubmissionError {
   if (redirectToLoginIfUnauthorized(error)) {
-    return { fieldErrors: {}, genericMessage: null };
+    // Brief message while the page reloads into the OIDC login challenge.
+    return {
+      fieldErrors: {},
+      genericMessage: "Session expired. Attempting re-authentication…",
+    };
   }
   if (isValidationError(error)) {
     const errors = error.body.errors ?? {};

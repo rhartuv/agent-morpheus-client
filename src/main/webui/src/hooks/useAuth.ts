@@ -51,8 +51,10 @@ export function useAuth() {
 
       if (!response.ok) {
         if (response.status === 401 || response.status === 499) {
+          // Reload starts the OIDC challenge; do not throw — useApi would treat it as a
+          // failed request and the message would not match auth-challenge detection.
           redirectToLogin();
-          throw new Error('Unauthorized - redirecting to login');
+          return new Promise<UserInfo>(() => {});
         }
         throw new Error(`Failed to fetch user info: ${response.status} ${response.statusText}`);
       }
