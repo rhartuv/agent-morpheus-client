@@ -83,7 +83,6 @@ export function getProductAnalysisStatus(
  */
 export function getProductFinding(
   productStatus: ProductStatus,
-  _analysisState: string,
   statusCounts: Record<string, number>,
   submittedCount?: number,
 ): Finding | null {
