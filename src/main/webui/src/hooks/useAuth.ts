@@ -16,6 +16,7 @@
  */
 
 import { useApi } from './useApi';
+import { redirectToLogin } from '../utils/errorHandling';
 
 export interface UserInfo {
   name: string;
@@ -47,8 +48,8 @@ export function useAuth() {
       });
 
       if (!response.ok) {
-        // If unauthorized, the user needs to login (redirect handled by Quarkus)
         if (response.status === 401) {
+          redirectToLogin();
           throw new Error('Unauthorized - redirecting to login');
         }
         throw new Error(`Failed to fetch user info: ${response.status} ${response.statusText}`);

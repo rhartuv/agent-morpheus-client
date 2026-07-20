@@ -17,6 +17,49 @@
 import { ApiError } from "../generated-client";
 import type { ValidationErrorResponse } from "../generated-client/models/ValidationErrorResponse";
 
+let unauthorizedRedirectInProgress = false;
+
+/**
+ * Returns true when the error indicates an expired or missing authentication session.
+ * Covers generated-client {@link ApiError} (401) and fetch-style `HTTP 401: ...` errors.
+ */
+export function isUnauthorizedError(error: unknown): boolean {
+  if (error instanceof ApiError) {
+    return error.status === 401;
+  }
+  if (error instanceof Error && /^HTTP 401\b/.test(error.message)) {
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Forces a full-page reload so Quarkus OIDC can challenge the user and show
+ * the login screen. React Router navigation is not enough — the SPA would stay
+ * mounted with a stale session.
+ */
+export function redirectToLogin(): void {
+  if (unauthorizedRedirectInProgress) {
+    return;
+  }
+  unauthorizedRedirectInProgress = true;
+  // Same-document reload (not assign of a constructed URL) so Quarkus can start
+  // the OIDC login challenge for the current path after the session is gone.
+  window.location.reload();
+}
+
+/**
+ * On 401 Unauthorized, redirects to login via {@link redirectToLogin}.
+ *
+ * @returns true if a redirect was started (caller should stop showing the error)
+ */
+export function redirectToLoginIfUnauthorized(error: unknown): boolean {
+  if (!isUnauthorizedError(error)) {
+    return false;
+  }
+  redirectToLogin();
+  return true;
+}
 
 /**
  * User-friendly error message formatter for API errors
@@ -117,6 +160,9 @@ export function parseRequestAnalysisSubmissionError(
   error: unknown,
   fallbackMessage: string = DEFAULT_SUBMISSION_ERROR
 ): RequestAnalysisSubmissionError {
+  if (redirectToLoginIfUnauthorized(error)) {
+    return { fieldErrors: {}, genericMessage: null };
+  }
   if (isValidationError(error)) {
     const errors = error.body.errors ?? {};
     const fieldErrors: Record<string, string> = {};

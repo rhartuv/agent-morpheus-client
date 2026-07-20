@@ -19,6 +19,7 @@
 import { useState, useEffect, useRef } from "react";
 import type { CancelablePromise } from "../generated-client";
 import { useLiveUpdatesRevision } from "../contexts/LiveUpdatesContext";
+import { redirectToLoginIfUnauthorized } from "../utils/errorHandling";
 
 export interface UseApiResult<T> {
   data: T | null;
@@ -102,6 +103,10 @@ export function useApi<T>(
             return;
           }
 
+          if (redirectToLoginIfUnauthorized(err)) {
+            return;
+          }
+
           if (!cancelledRef.current) {
             setError(err instanceof Error ? err : new Error(String(err)));
             setLoading(false);
@@ -110,6 +115,9 @@ export function useApi<T>(
           }
         });
     } catch (err) {
+      if (redirectToLoginIfUnauthorized(err)) {
+        return;
+      }
       if (!cancelledRef.current) {
         setError(err instanceof Error ? err : new Error(String(err)));
         setLoading(false);

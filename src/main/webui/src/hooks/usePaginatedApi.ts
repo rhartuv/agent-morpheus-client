@@ -21,6 +21,7 @@ import { useLiveUpdatesRevision } from '../contexts/LiveUpdatesContext';
 import { OpenAPI } from '../generated-client/core/OpenAPI';
 import { getHeaders } from '../generated-client/core/request';
 import type { ApiRequestOptions } from '../generated-client/core/ApiRequestOptions';
+import { redirectToLogin, redirectToLoginIfUnauthorized } from '../utils/errorHandling';
 
 // Helper to build URL from request options (re-implemented since getUrl is not exported)
 const isDefined = <T>(value: T | null | undefined): value is Exclude<T, null | undefined> => {
@@ -185,6 +186,10 @@ export function usePaginatedApi<T>(
       }
 
       if (!response.ok) {
+        if (response.status === 401) {
+          redirectToLogin();
+          throw new Error('HTTP 401: Unauthorized');
+        }
         const errorText = await response.text().catch(() => 'Unknown error');
         throw new Error(`HTTP ${response.status}: ${errorText}`);
       }
@@ -216,6 +221,10 @@ export function usePaginatedApi<T>(
     } catch (err) {
       // Ignore abort errors
       if (err instanceof Error && err.name === 'AbortError') {
+        return;
+      }
+
+      if (redirectToLoginIfUnauthorized(err)) {
         return;
       }
       
