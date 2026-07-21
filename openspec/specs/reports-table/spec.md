@@ -125,23 +125,33 @@ When a product has exactly one submitted report (`submittedCount === 1`), clicki
 - **AND** only the clicked row shows the loading indicator (other rows remain unchanged)
 
 ### Requirement: Reports Table Finding Column
-The reports table SHALL display a "Finding" column with one finding per product. If any component report is still in pending, queued, or sent state, the Finding SHALL be "In progress" until every component has a terminal outcome (completed, failed, expired, or excluded). After that, six outcomes apply in priority order: Vulnerable > Uncertain > Failed > Excluded > Not vulnerable. Only the single applicable finding is shown per row. Counts for Vulnerable, Uncertain, and Excluded only; no count for In progress, Not vulnerable, or Failed.
+The reports table SHALL display a "Finding" column with one finding per product. If any component report is still in pending, queued, or sent state, the Finding SHALL be "In progress" until every component has a terminal outcome (completed, failed, expired, or excluded). After that, outcomes apply in priority order: Vulnerable > Uncertain > Failed > Not vulnerable > No components analyzed. Only the single applicable finding is shown per row. Counts for Vulnerable and Uncertain only; no count for In progress, Not vulnerable, Failed, or No components analyzed.
+
+The legacy Finding label **Excluded** (including count forms such as "2 Excluded") SHALL NOT be shown in the Finding column.
 
 #### Scenario: Finding column header
 - **WHEN** a user views the reports table
 - **THEN** the column header is "Finding" with a help icon and popover explaining priority and states
+- **AND** the popover states that while any repository is pending, queued, or sent the finding is In progress; after that the highest-priority analyzed outcome is shown; Not vulnerable applies when analyzed components are not vulnerable even if some components were excluded; No components analyzed applies when every submitted component was excluded
 
 #### Scenario: Finding by priority
 - **WHEN** a product has any report in pending, queued, or sent state → display "In progress", no count, outlined grey label and InProgressIcon (even if some other repositories already have a vulnerable or uncertain result)
 - **WHEN** no reports are pending, queued, or sent, and the product has one or more vulnerable repositories → display "Vulnerable" + count, red (danger) label
 - **WHEN** no reports are pending, queued, or sent, zero vulnerable, and one or more uncertain → display "Uncertain" + count, orange (warning) label
-- **WHEN** no reports are pending, queued, or sent, zero vulnerable, zero uncertain, no failed/expired reports, and one or more excluded components (`statusCounts["excluded"]` > 0) → display "Excluded" + count, with label styling as defined (e.g. grey or info)
-- **WHEN** no reports are pending, queued, or sent, 100% of reports are completed and 100% are not vulnerable and no excluded components → display "Not vulnerable", no count, green (success) label
+- **WHEN** no reports are pending, queued, or sent, zero vulnerable, zero uncertain, and one or more failed/expired reports → display "Failed", no count, grey filled label with ExclamationCircleIcon
+- **WHEN** no reports are pending, queued, or sent, zero vulnerable, zero uncertain, no failed/expired reports, and one or more analyzed components are not vulnerable (even if `statusCounts["excluded"]` > 0 but not 100% of submitted components) → display "Not vulnerable", no count, green (success) label
+- **WHEN** no reports are pending, queued, or sent, zero vulnerable, zero uncertain, no failed/expired reports, and 100% of submitted components are excluded (`statusCounts["excluded"]` equals `submittedCount`) → display "No components analyzed", no count, purple filled PatternFly Label (default size/state; no icon)
 
-#### Scenario: Excluded state uses submission failure count
-- **WHEN** a product has excluded components (submissionFailures length > 0) and no higher-priority finding
-- **THEN** the Finding column displays "Excluded" with the count equal to `statusCounts["excluded"]` (length of product submissionFailures)
-- **AND** the count is shown in the same format as Vulnerable and Uncertain (e.g. "3 Excluded")
+#### Scenario: Mixed excluded and analyzed components use analyzed finding
+- **WHEN** a product has one or more excluded components and one or more successfully analyzed components with an active finding status (Vulnerable, Uncertain, or Not vulnerable)
+- **THEN** the Finding column displays the analyzed outcome according to priority Vulnerable > Uncertain > Not vulnerable
+- **AND** the Finding column does not display "Excluded" or any excluded count
+
+#### Scenario: All components excluded shows No components analyzed
+- **WHEN** a product has `submittedCount` equal to the excluded count (`statusCounts["excluded"]`, from `submissionFailures.length`) and no higher-priority finding applies
+- **THEN** the Finding column displays "No components analyzed"
+- **AND** the label uses PatternFly `color="purple"` and `variant="filled"` with no icon and no numeric count
+- **AND** the Finding column does not display "Excluded" or an excluded count
 
 ### Requirement: Reports Page Tabs and Single Repositories
 

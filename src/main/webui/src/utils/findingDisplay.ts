@@ -25,7 +25,7 @@ export type Finding =
   | { type: "uncertain"; count?: number }
   | { type: "in-progress" }
   | { type: "failed" }
-  | { type: "excluded"; count?: number };
+  | { type: "no-components-analyzed" };
 
 export type ProductStatus = {
   vulnerableCount: number;
@@ -75,14 +75,14 @@ export function getProductAnalysisStatus(
 /**
  * Returns the single prioritized finding for a product row (reports table).
  * While any repository is still pending, queued, or sent, the row shows In progress only;
- * after all have a terminal outcome, priority is: Vulnerable > Uncertain > Failed > Excluded > Not vulnerable.
+ * after all have a terminal outcome, priority is:
+ * Vulnerable > Uncertain > Failed > Not vulnerable > No components analyzed.
  * Only returns type + optional count; color/variant are applied by Finding component.
- * totalCount uses submittedCount (e.g. productSummary.data.submittedCount) when provided.
- * Excluded uses statusCounts["excluded"] (submission failure count from API).
+ * Not vulnerable applies when any analyzed component is not vulnerable (exclusions do not block it).
+ * No components analyzed applies when statusCounts["excluded"] equals submittedCount (100% excluded).
  */
 export function getProductFinding(
   productStatus: ProductStatus,
-  analysisState: string,
   statusCounts: Record<string, number>,
   submittedCount?: number,
 ): Finding | null {
@@ -104,15 +104,16 @@ export function getProductFinding(
   if (hasFailedInCounts(statusCounts)) {
     return { type: "failed" };
   }
-  const excludedCount = getExcludedCount(statusCounts);
-  if (excludedCount > 0) {
-    return { type: "excluded", count: excludedCount };
-  }
-  if (
-    analysisState === "completed" &&
-    productStatus.notVulnerableCount === submittedCount
-  ) {
+  if (productStatus.notVulnerableCount > 0) {
     return { type: "not-vulnerable" };
+  }
+  const excludedCount = getExcludedCount(statusCounts);
+  if (
+    submittedCount !== undefined &&
+    submittedCount > 0 &&
+    excludedCount === submittedCount
+  ) {
+    return { type: "no-components-analyzed" };
   }
   return null;
 }

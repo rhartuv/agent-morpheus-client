@@ -219,9 +219,13 @@ const SbomsTable: React.FC = () => {
                           While any repository is still pending, queued, or
                           sent, the finding is In progress. After every
                           repository has finished, this shows the highest risk
-                          level detected across all of them. Not Vulnerable
-                          appears only when every repository is analyzed and
-                          found to be not vulnerable.
+                          level detected across analyzed components (Vulnerable,
+                          Uncertain, Failed, then Not vulnerable). Not
+                          Vulnerable appears only when every analyzed
+                          repository is found to be not vulnerable. Excluded
+                          components do not override an analyzed finding. When
+                          every submitted component was excluded, the finding is
+                          No components analyzed.
                         </div>
                       }
                     >

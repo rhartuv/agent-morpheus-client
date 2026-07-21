@@ -138,7 +138,7 @@ The report page SHALL display an embedded repository reports table that conforms
 ### Requirement: Report Page Layout
 The report page SHALL use PatternFly layout components and follow the standard page structure. The report page SHALL display a breadcrumb navigation, page title, and **product analysis status** at the top of the page. The product analysis status SHALL appear on its own row **directly below** the page title (not inline beside the title).
 
-The product analysis status SHALL be exactly one of two labels: **In progress** or **Completed**. It SHALL NOT display vulnerability findings (Vulnerable, Uncertain, Not vulnerable, Excluded, Failed)—those remain in the Finding column on the reports table and in per-repository rows.
+The product analysis status SHALL be exactly one of two labels: **In progress** or **Completed**. It SHALL NOT display vulnerability findings (Vulnerable, Uncertain, Not vulnerable, No components analyzed, Failed)—those remain in the Finding column on the reports table and in per-repository rows.
 
 Status SHALL be derived from backend-computed `summary.productState` on `ProductSummary` (same rules as `ReportRepositoryService` product summary aggregation):
 
