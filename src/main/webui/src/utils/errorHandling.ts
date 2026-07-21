@@ -17,6 +17,64 @@
 import { ApiError } from "../generated-client";
 import type { ValidationErrorResponse } from "../generated-client/models/ValidationErrorResponse";
 
+let unauthorizedRedirectInProgress = false;
+
+/**
+ * Quarkus OIDC returns 499 for SPA/XHR when
+ * {@code java-script-auto-redirect=false} and re-authentication is required.
+ * 401 covers bearer/missing-auth cases.
+ */
+function isAuthChallengeStatus(status: number): boolean {
+  return status === 401 || status === 499;
+}
+
+/**
+ * Returns true when the error indicates an expired or missing authentication session.
+ * Covers generated-client {@link ApiError} (401/499) and fetch-style `HTTP 401|499: ...` errors.
+ */
+export function isUnauthorizedError(error: unknown): boolean {
+  if (error instanceof ApiError) {
+    return isAuthChallengeStatus(error.status);
+  }
+  if (error instanceof Error && /^HTTP (401|499)\b/.test(error.message)) {
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Forces a full-page reload so Quarkus OIDC can challenge the user and show
+ * the login screen. React Router navigation is not enough — the SPA would stay
+ * mounted with a stale session.
+ */
+export function redirectToLogin(): void {
+  if (unauthorizedRedirectInProgress) {
+    return;
+  }
+  unauthorizedRedirectInProgress = true;
+  sessionStorage.clear();
+  // Same-document reload (not assign of a constructed URL) so Quarkus can start
+  // the OIDC login challenge for the current path after the session is gone.
+  window.location.reload();
+}
+
+/** Resets redirect guard state. Intended for unit tests only. */
+export function resetUnauthorizedRedirectState(): void {
+  unauthorizedRedirectInProgress = false;
+}
+
+/**
+ * On 401/499 auth challenge, redirects to login via {@link redirectToLogin}.
+ *
+ * @returns true if a redirect was started (caller should stop showing the error)
+ */
+export function redirectToLoginIfUnauthorized(error: unknown): boolean {
+  if (!isUnauthorizedError(error)) {
+    return false;
+  }
+  redirectToLogin();
+  return true;
+}
 
 /**
  * User-friendly error message formatter for API errors
@@ -117,6 +175,13 @@ export function parseRequestAnalysisSubmissionError(
   error: unknown,
   fallbackMessage: string = DEFAULT_SUBMISSION_ERROR
 ): RequestAnalysisSubmissionError {
+  if (redirectToLoginIfUnauthorized(error)) {
+    // Brief message while the page reloads into the OIDC login challenge.
+    return {
+      fieldErrors: {},
+      genericMessage: "Session expired. Attempting re-authentication…",
+    };
+  }
   if (isValidationError(error)) {
     const errors = error.body.errors ?? {};
     const fieldErrors: Record<string, string> = {};

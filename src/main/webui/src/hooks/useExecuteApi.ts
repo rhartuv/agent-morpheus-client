@@ -19,6 +19,7 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 import type { CancelablePromise } from '../generated-client';
+import { redirectToLoginIfUnauthorized } from '../utils/errorHandling';
 
 export interface UseExecuteApiResult<T> {
   data: T | null;
@@ -83,6 +84,10 @@ export function useExecuteApi<T>(
           if (err?.isCancelled || err?.name === 'CancelError') {
             return;
           }
+
+          if (redirectToLoginIfUnauthorized(err)) {
+            return;
+          }
           
           if (!cancelledRef.current) {
             setError(err instanceof Error ? err : new Error(String(err)));
@@ -91,6 +96,9 @@ export function useExecuteApi<T>(
           }
         });
     } catch (err) {
+      if (redirectToLoginIfUnauthorized(err)) {
+        return;
+      }
       if (!cancelledRef.current) {
         setError(err instanceof Error ? err : new Error(String(err)));
         setLoading(false);

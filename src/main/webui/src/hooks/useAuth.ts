@@ -16,6 +16,8 @@
  */
 
 import { useApi } from './useApi';
+import { JS_REQUEST_HEADER } from '../config/apiClient';
+import { redirectToLogin } from '../utils/errorHandling';
 
 export interface UserInfo {
   name: string;
@@ -41,15 +43,18 @@ export function useAuth() {
     async () => {
       const response = await fetch('/api/v1/user', {
         headers: {
-          'Accept': 'application/json',
+          Accept: 'application/json',
+          ...JS_REQUEST_HEADER,
         },
         credentials: 'include', // Include cookies for authentication
       });
 
       if (!response.ok) {
-        // If unauthorized, the user needs to login (redirect handled by Quarkus)
-        if (response.status === 401) {
-          throw new Error('Unauthorized - redirecting to login');
+        if (response.status === 401 || response.status === 499) {
+          // Reload starts the OIDC challenge; do not throw — useApi would treat it as a
+          // failed request and the message would not match auth-challenge detection.
+          redirectToLogin();
+          return new Promise<UserInfo>(() => {});
         }
         throw new Error(`Failed to fetch user info: ${response.status} ${response.statusText}`);
       }
